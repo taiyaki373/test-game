@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aegis Vanguard — Architecture & Development Roadmap</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#071026; color:#e6f7ff; padding:24px; }
+    h1,h2 { color:#7fe7ff }
+    .panel { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.04); padding:18px; border-radius:8px; margin-bottom:18px }
+    pre { background:#001426; padding:12px; border-radius:6px; overflow:auto }
+    .links a { color:#8ef0ff }
+    .center { text-align:center }
+  </style>
+  <!-- Using inline SVG for diagrams to ensure offline/blocked-CDN environments render correctly -->
+</head>
+<body>
+  <div class="center"><h1>Aegis Vanguard — Architecture & Development Roadmap</h1>
+  <div style="max-width:900px;margin:0 auto; color:#dffaff;">A concise overview of the runtime architecture, asset pipeline, QA flow and short development steps. Includes a Mermaid diagram and an embedded SVG for quick visual reference.</div></div>
+
+  <section class="panel">
+    <h2>High-level Architecture (Mermaid)</h2>
+    <!-- Inline SVG flowchart (replacing Mermaid) -->
+    <svg width="100%" height="320" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture flow">
+      <defs>
+        <style>.box{fill:#071026;stroke:#0fb;stroke-width:1.2px;}.label{fill:#cfefff;font-family:Inter,system-ui,Arial;font-size:13px}.small{font-size:11px;fill:#aef}</style>
+        <marker id="arr" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0fb"/></marker>
+      </defs>
+
+      <!-- DEV -->
+      <rect x="20" y="20" width="360" height="100" rx="8" class="box"/>
+      <text x="40" y="46" class="label">Development</text>
+      <text x="40" y="68" class="small">generate_imgen4_prompts.js → imgen4 (#00FF00)</text>
+      <text x="40" y="88" class="small">chromakey.js → transparent PNG</text>
+
+      <!-- RUNTIME -->
+      <rect x="420" y="20" width="360" height="140" rx="8" class="box"/>
+      <text x="440" y="46" class="label">Runtime Engine</text>
+      <text x="440" y="70" class="small">index.html + src/game.js</text>
+      <text x="440" y="88" class="small">procedural.js (fallback sprites)</text>
+      <text x="440" y="106" class="small">audio.js (WebAudio synth)</text>
+      <text x="440" y="124" class="small">Game loop, Entities, Collisions</text>
+
+      <!-- QA -->
+      <rect x="820" y="20" width="360" height="100" rx="8" class="box"/>
+      <text x="840" y="46" class="label">QA / CI</text>
+      <text x="840" y="68" class="small">Playwright tests → screenshots/video</text>
+      <text x="840" y="88" class="small">assemble_gif.sh → gameplay.gif</text>
+
+      <!-- OPS -->
+      <rect x="20" y="150" width="360" height="60" rx="8" class="box"/>
+      <text x="40" y="180" class="label">Local Run</text>
+      <text x="40" y="198" class="small">start.command → http.server (dev)</text>
+
+      <!-- Arrows -->
+      <line x1="380" y1="70" x2="420" y2="70" stroke="#0fb" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="780" y1="70" x2="820" y2="70" stroke="#0fb" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="200" y1="120" x2="200" y2="150" stroke="#0fb" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="600" y1="160" x2="820" y2="120" stroke="#0fb" stroke-width="2" marker-end="url(#arr)"/>
+    </svg>
+  </section>
+
+  <section class="panel">
+    <h2>SVG: Simplified Dataflow</h2>
+    <!-- Inline SVG summarizing the same flow (renders without external libs) -->
+    <svg width="100%" height="220" viewBox="0 0 1200 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dataflow">
+      <defs>
+        <style>.sbox{fill:#071026;stroke:#0fb;stroke-width:1.5px;}.stext{fill:#ccf;font-family:Inter,system-ui,Arial;font-size:12px}</style>
+      </defs>
+      <rect x="10" y="10" width="360" height="80" class="sbox" rx="8"/>
+      <text x="30" y="36" class="stext">Asset Pipeline</text>
+      <text x="30" y="56" class="stext">generate_imgen4_prompts → imgen4 → chromaKey</text>
+
+      <rect x="420" y="10" width="360" height="80" class="sbox" rx="8"/>
+      <text x="440" y="36" class="stext">Runtime Engine</text>
+      <text x="440" y="56" class="stext">index.html + src/game.js + procedural.js + audio.js</text>
+
+      <rect x="810" y="10" width="360" height="80" class="sbox" rx="8"/>
+      <text x="830" y="36" class="stext">QA / CI</text>
+      <text x="830" y="56" class="stext">Playwright tests → screenshots → GIF</text>
+
+      <line x1="370" y1="50" x2="420" y2="50" stroke="#0fb" stroke-width="2" marker-end="url(#arrow)"/>
+      <line x1="780" y1="50" x2="810" y2="50" stroke="#0fb" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#0fb" />
+        </marker>
+      </defs>
+    </svg>
+  </section>
+
+  <section class="panel">
+    <h2>Key Components</h2>
+    <ul>
+      <li><strong>index.html</strong> — single-page launcher, menu overlays, canvas setup.</li>
+      <li><strong>src/game.js</strong> — game loop, entity systems, power-ups, boss logic, rendering pipeline.</li>
+      <li><strong>src/procedural.js</strong> — fallback procedural sprite renderers for robust offline use.</li>
+      <li><strong>src/chromakey.js</strong> — converts imgen4 green-background assets into transparent PNGs with 1px erosion to avoid green fringe.</li>
+      <li><strong>src/audio.js</strong> — WebAudio synthesizer for BGM/SFX; sequencer + SFX builders.</li>
+      <li><strong>tests/game.spec.js</strong> — Playwright E2E visual & collision probe; auto-screenshots saved to test-results/screenshots.</li>
+      <li><strong>start.command</strong> — convenience script to start a simple HTTP server and print local IP/QR for mobile testing.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Short Development Steps (Recommended)</h2>
+    <ol>
+      <li>Generate assets: node scripts/generate_imgen4_prompts.js → use imgen4 to create green-background PNGs.</li>
+      <li>Process assets: place PNGs in repo root, chromakey.js will auto-convert at load time (or pre-run a headless script to batch-process and commit).</li>
+      <li>Local run: chmod +x start.command; ./start.command 8000; open http://localhost:8000/</li>
+      <li>Playtest balance: iterate on src/game.js values (rank, spawnRate, weapon cooldowns). Use ?testMode=true for quick cycles.</li>
+      <li>QA: npm test to run Playwright; then npm run test:report to assemble gameplay GIF for review.</li>
+      <li>CI: add GitHub Actions to run tests and upload screenshots/GIFs as artifacts (optional, recommended).</li>
+    </ol>
+  </section>
+
+  <section class="panel">
+    <h2>Quick Links</h2>
+    <div class="links">
+      <a href="/index.html" target="_blank">Open game (index.html)</a> •
+      <a href="/tests/game.spec.js" target="_blank">Open Playwright spec</a> •
+      <a href="/scripts/generate_imgen4_prompts.js" target="_blank">imgen4 prompt generator</a>
+    </div>
+  </section>
+
+  <footer style="color:#7fb; font-size:13px; margin-top:18px">Generated by Copilot CLI — open this page and use the diagrams to navigate the repo. Served from the local dev server.</footer>
+</body>
+</html>
