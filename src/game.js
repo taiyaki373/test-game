@@ -514,11 +514,10 @@ class Game {
       const sel = this.powerUpNames[this.powerUpIndex];
       this.spawnFloatingText(`SELECTED: ${sel}`, this.player.x + this.player.w/2, this.player.y - 14, '#ffffff');
 
-      // Special: If the selected capsule is MISSILE (blue), apply immediate attack speed +10%
-      if (sel === 'MISSILE') {
-        // Apply multiplicative bonus, clamp to 2.0 max
-        const prev = this.player.attackSpeed || 1.0;
-        const next = Math.min(prev * 1.1, 2.0);
+      // Apply attack speed +10% for any non-fake (blue) capsule pickup
+      const prev = this.player.attackSpeed || 1.0;
+      const next = Math.min(prev * 1.1, 2.0);
+      if (next > prev) {
         this.player.attackSpeed = next;
         this.spawnFloatingText('FIRE RATE +10%', this.player.x + this.player.w/2, this.player.y - 34, '#00ccff');
         audio.playSFX('powerup_activate');
