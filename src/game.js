@@ -121,15 +121,26 @@ class Game {
     this.powerUpIndex = -1; // -1 means none selected
     this.powerUpNames = ['SPEED', 'MISSILE', 'DOUBLE', 'SPREAD', 'LASER', 'OPTION', 'SHIELD'];
 
-    // Human-friendly descriptions for HUD when a power-up is selected/activated
+    // Human-friendly descriptions for HUD when a power-up is selected/activated (日本語表示)
     this.powerDescriptions = {
-      SPEED: 'Increase ship movement speed and responsiveness (+).',
-      MISSILE: 'Enable heavy ground missiles that deal high impact damage.',
-      DOUBLE: 'Secondary gun fires diagonal shots for superior coverage.',
-      SPREAD: 'Three-way spread shots to hit multiple targets.',
-      LASER: 'Continuous laser beam that penetrates enemies.',
-      OPTION: 'Adds a drone that mimics your fire (up to 4).',
-      SHIELD: 'Grants multi-hit shield that absorbs enemy hits.'
+      SPEED: '移動速度と操作性が向上します。',
+      MISSILE: '高威力の地上ミサイルを使用可能にします。',
+      DOUBLE: '斜め弾を追加し、射撃範囲が拡大します。',
+      SPREAD: '3方向の散弾で複数の敵に当てやすくなります。',
+      LASER: '貫通レーザーで敵を継続的に貫きます。',
+      OPTION: '自機を模倣するドローンを追加します（最大4体）。',
+      SHIELD: '多段ヒットを吸収するシールドを付与します。'
+    };
+
+    // 表示用の日本語名称（内部識別子は英字のまま）
+    this.powerDisplayNames = {
+      SPEED: 'スピード',
+      MISSILE: 'ミサイル',
+      DOUBLE: 'ダブル',
+      SPREAD: 'スプレッド',
+      LASER: 'レーザー',
+      OPTION: 'オプション',
+      SHIELD: 'シールド'
     };
     
     this.setupEventListeners();
@@ -465,7 +476,7 @@ class Game {
     if (activated) {
       audio.playSFX('powerup_activate');
       // Visual feedback: floating text indicating activation
-      this.spawnFloatingText(`POWER: ${powerUp} ACTIVATED`, this.player.x + this.player.w/2, this.player.y - 24, '#00ffcc');
+      this.spawnFloatingText(`${this.powerDisplayNames[powerUp] || powerUp} を発動しました`, this.player.x + this.player.w/2, this.player.y - 24, '#00ffcc');
 
       // Extra immediate effects for clarity and stronger feel
       if (powerUp === 'OPTION') {
@@ -512,14 +523,14 @@ class Game {
       this.powerUpIndex = (this.powerUpIndex + 1) % this.powerUpNames.length;
       // Immediate feedback of which power-up is selected
       const sel = this.powerUpNames[this.powerUpIndex];
-      this.spawnFloatingText(`SELECTED: ${sel}`, this.player.x + this.player.w/2, this.player.y - 14, '#ffffff');
+      this.spawnFloatingText(`選択: ${this.powerDisplayNames[sel] || sel}`, this.player.x + this.player.w/2, this.player.y - 14, '#ffffff');
 
       // Apply attack speed +10% for any non-fake (blue) capsule pickup
       const prev = this.player.attackSpeed || 1.0;
       const next = Math.min(prev * 1.1, 2.0);
       if (next > prev) {
         this.player.attackSpeed = next;
-        this.spawnFloatingText('FIRE RATE +10%', this.player.x + this.player.w/2, this.player.y - 34, '#00ccff');
+        this.spawnFloatingText('攻撃速度 +10%', this.player.x + this.player.w/2, this.player.y - 34, '#00ccff');
         audio.playSFX('powerup_activate');
       }
     }
@@ -823,7 +834,7 @@ class Game {
     };
     
     // Play transition boss warning text
-    this.spawnFloatingText("WARNING! DETECTING MASSIVE THREAT AHEAD!", CANVAS_WIDTH / 2 - 200, CANVAS_HEIGHT / 2, '#ff0055');
+    this.spawnFloatingText("警告！大規模な脅威を検出しました！", CANVAS_WIDTH / 2 - 200, CANVAS_HEIGHT / 2, '#ff0055');
     audio.startBGM('boss');
   }
 
@@ -1753,15 +1764,15 @@ class Game {
           this.ctx.font = '900 20px Orbitron';
           this.ctx.fillStyle = '#ff0055';
           this.ctx.textAlign = 'center';
-          this.ctx.fillText('⚠️ CRITICAL BEACON ALERT ⚠️', CANVAS_WIDTH / 2, 104);
+          this.ctx.fillText('⚠️ 致命的ビーコン警報 ⚠️', CANVAS_WIDTH / 2, 104);
           
-          // Subtext depends on the cause recorded
-          let alertText = "CAUTION! UNKNOWN ANOMALY AHEAD!";
-          if (record.reason === 'FALLING_ROCK') alertText = "WARNING! INCOMING CELESTIAL DEBRIS!";
-          else if (record.reason === 'REAR_ASSAULT') alertText = "CAUTION! REAR INTERCEPT ASSAULT ACTIVE!";
-          else if (record.reason.startsWith('PRESS_WALL')) alertText = "WARNING! PRESSURE COMPRESSION PLATES ENGAGED!";
-          else if (record.reason === 'FAKE_CAPSULE') alertText = "CAUTION! DECEPTIVE ENERGY DECOY RADAR!";
-          else if (record.reason === 'ENEMY_BULLET') alertText = "CAUTION! ENEMY FIELD CONCENTRATION ZONE!";
+          // Subtext depends on the cause recorded (日本語)
+          let alertText = '警告：不明な異常領域です！';
+          if (record.reason === 'FALLING_ROCK') alertText = '注意：落下する天体デブリに注意！';
+          else if (record.reason === 'REAR_ASSAULT') alertText = '注意：背後からの奇襲機が接近しています！';
+          else if (record.reason.startsWith('PRESS_WALL')) alertText = '警告：圧縮プレートが作動中です！';
+          else if (record.reason === 'FAKE_CAPSULE') alertText = '注意：偽のデコイカプセルが検出されました！';
+          else if (record.reason === 'ENEMY_BULLET') alertText = '注意：敵弾が集中する危険地帯です！';
           
           this.ctx.font = '700 13px Orbitron';
           this.ctx.fillStyle = '#ffffff';
