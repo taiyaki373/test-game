@@ -1,0 +1,32 @@
+{
+  "name": "test-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "playwright test",
+    "test:report": "npx playwright test && ./scripts/assemble_gif.sh || true",
+    "start": "python3 -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taiyaki373/test-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/taiyaki373/test-game/issues"
+  },
+  "homepage": "https://github.com/taiyaki373/test-game#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "playwright": "^1.60.0",
+    "qrcode-terminal": "^0.12.0",
+    "vite": "^8.0.16"
+  }
+}
