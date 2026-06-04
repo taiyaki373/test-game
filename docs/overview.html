@@ -15,11 +15,11 @@
   <!-- Using inline SVG for diagrams to ensure offline/blocked-CDN environments render correctly -->
 </head>
 <body>
-  <div class="center"><h1>Aegis Vanguard — Architecture & Development Roadmap</h1>
-  <div style="max-width:900px;margin:0 auto; color:#dffaff;">A concise overview of the runtime architecture, asset pipeline, QA flow and short development steps. Includes a Mermaid diagram and an embedded SVG for quick visual reference.</div></div>
+  <div class="center"><h1>Aegis Vanguard — アーキテクチャ＆開発ロードマップ</h1>
+  <div style="max-width:900px;margin:0 auto; color:#dffaff;">ランタイムアーキテクチャ、アセットパイプライン、QAフロー、開発手順の簡潔な概要です。図解（SVG）と要約を含み、ローカル開発の参照用に最適化しています。</div></div>
 
   <section class="panel">
-    <h2>High-level Architecture (Mermaid)</h2>
+    <h2>高レベルアーキテクチャ</h2>
     <!-- Inline SVG flowchart (replacing Mermaid) -->
     <svg width="100%" height="320" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture flow">
       <defs>
@@ -29,22 +29,22 @@
 
       <!-- DEV -->
       <rect x="20" y="20" width="360" height="100" rx="8" class="box"/>
-      <text x="40" y="46" class="label">Development</text>
-      <text x="40" y="68" class="small">generate_imgen4_prompts.js → imgen4 (#00FF00)</text>
-      <text x="40" y="88" class="small">chromakey.js → transparent PNG</text>
+      <text x="40" y="46" class="label">開発</text>
+      <text x="40" y="68" class="small">generate_imgen4_prompts.js → imgen4（緑背景 #00FF00）</text>
+      <text x="40" y="88" class="small">chromakey.js → 透過PNG生成</text>
 
       <!-- RUNTIME -->
       <rect x="420" y="20" width="360" height="140" rx="8" class="box"/>
-      <text x="440" y="46" class="label">Runtime Engine</text>
-      <text x="440" y="70" class="small">index.html + src/game.js</text>
-      <text x="440" y="88" class="small">procedural.js (fallback sprites)</text>
-      <text x="440" y="106" class="small">audio.js (WebAudio synth)</text>
-      <text x="440" y="124" class="small">Game loop, Entities, Collisions</text>
+      <text x="440" y="46" class="label">ランタイム</text>
+      <text x="440" y="70" class="small">index.html + src/game.js（ゲーム本体）</text>
+      <text x="440" y="88" class="small">procedural.js（アセット未取得時のフォールバック）</text>
+      <text x="440" y="106" class="small">audio.js（WebAudio によるBGM/SFX合成）</text>
+      <text x="440" y="124" class="small">ゲームループ、エンティティ、当たり判定</text>
 
       <!-- QA -->
       <rect x="820" y="20" width="360" height="100" rx="8" class="box"/>
-      <text x="840" y="46" class="label">QA / CI</text>
-      <text x="840" y="68" class="small">Playwright tests → screenshots/video</text>
+      <text x="840" y="46" class="label">QA／CI</text>
+      <text x="840" y="68" class="small">Playwright テスト → スクリーンショット／動画</text>
       <text x="840" y="88" class="small">assemble_gif.sh → gameplay.gif</text>
 
       <!-- OPS -->
@@ -61,23 +61,23 @@
   </section>
 
   <section class="panel">
-    <h2>SVG: Simplified Dataflow</h2>
+    <h2>SVG：簡易データフロー</h2>
     <!-- Inline SVG summarizing the same flow (renders without external libs) -->
     <svg width="100%" height="220" viewBox="0 0 1200 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dataflow">
       <defs>
         <style>.sbox{fill:#071026;stroke:#0fb;stroke-width:1.5px;}.stext{fill:#ccf;font-family:Inter,system-ui,Arial;font-size:12px}</style>
       </defs>
       <rect x="10" y="10" width="360" height="80" class="sbox" rx="8"/>
-      <text x="30" y="36" class="stext">Asset Pipeline</text>
-      <text x="30" y="56" class="stext">generate_imgen4_prompts → imgen4 → chromaKey</text>
+      <text x="30" y="36" class="stext">アセットパイプライン</text>
+      <text x="30" y="56" class="stext">generate_imgen4_prompts → imgen4（緑背景）→ chromaKey（透過化）</text>
 
       <rect x="420" y="10" width="360" height="80" class="sbox" rx="8"/>
-      <text x="440" y="36" class="stext">Runtime Engine</text>
-      <text x="440" y="56" class="stext">index.html + src/game.js + procedural.js + audio.js</text>
+      <text x="440" y="36" class="stext">ランタイムエンジン</text>
+      <text x="440" y="56" class="stext">index.html / src/game.js / procedural.js / audio.js</text>
 
       <rect x="810" y="10" width="360" height="80" class="sbox" rx="8"/>
-      <text x="830" y="36" class="stext">QA / CI</text>
-      <text x="830" y="56" class="stext">Playwright tests → screenshots → GIF</text>
+      <text x="830" y="36" class="stext">QA／CI</text>
+      <text x="830" y="56" class="stext">Playwright テスト → スクリーンショット → GIF</text>
 
       <line x1="370" y1="50" x2="420" y2="50" stroke="#0fb" stroke-width="2" marker-end="url(#arrow)"/>
       <line x1="780" y1="50" x2="810" y2="50" stroke="#0fb" stroke-width="2" marker-end="url(#arrow)"/>
@@ -109,7 +109,7 @@
       <li>Generate assets: node scripts/generate_imgen4_prompts.js → use imgen4 to create green-background PNGs.</li>
       <li>Process assets: place PNGs in repo root, chromakey.js will auto-convert at load time (or pre-run a headless script to batch-process and commit).</li>
       <li>Local run: chmod +x start.command; ./start.command 8000; open http://localhost:8000/</li>
-      <li>Playtest balance: iterate on src/game.js values (rank, spawnRate, weapon cooldowns). Use ?testMode=true for quick cycles.</li>
+      <li>Playtest balance: src/game.js のパラメータ（rank、spawnRate、武器のクールダウン等）を調整して実施します。</li>
       <li>QA: npm test to run Playwright; then npm run test:report to assemble gameplay GIF for review.</li>
       <li>CI: add GitHub Actions to run tests and upload screenshots/GIFs as artifacts (optional, recommended).</li>
     </ol>

@@ -7,10 +7,8 @@ const CANVAS_WIDTH = 1280;
 const CANVAS_HEIGHT = 720;
 const GAME_SPEED = 4; // Scroll speed
 
-// Check if we are running in auto-test mode (speeds up stage durations)
-const urlParams = new URLSearchParams(window.location.search);
-const isTestMode = urlParams.get('testMode') === 'true';
-const STAGE_TIME = isTestMode ? 1.5 : 120; // 1.5s for automated test, 120s for normal play
+// Stage time in seconds for each stage
+const STAGE_TIME = 120; // normal play duration
 
 // Asset loading helper
 class AssetLoader {
@@ -393,10 +391,10 @@ class Game {
       w: 64,
       h: 40,
       speedLevel: 1,
-      hasMissile: false,
-      hasDouble: false,
-      hasSpread: false,
-      hasLaser: false,
+      missileLevel: 0,
+      doubleLevel: 0,
+      spreadLevel: 0,
+      laserLevel: 0,
       optionCount: 0,
       shieldHp: 0,
       isInvincible: 120, // 2s starting shield invincibility
@@ -436,27 +434,19 @@ class Game {
         }
         break;
       case 'MISSILE':
-        if (!this.player.hasMissile) {
-          this.player.hasMissile = true;
-          activated = true;
-        }
+        this.player.missileLevel = (this.player.missileLevel || 0) + 1; // additive
+        activated = true;
         break;
       case 'DOUBLE':
-        this.player.hasDouble = true;
-        this.player.hasSpread = false;
-        this.player.hasLaser = false; // mutually exclusive
+        this.player.doubleLevel = (this.player.doubleLevel || 0) + 1; // additive stacking
         activated = true;
         break;
       case 'SPREAD':
-        this.player.hasSpread = true;
-        this.player.hasDouble = false;
-        this.player.hasLaser = false; // mutually exclusive
+        this.player.spreadLevel = (this.player.spreadLevel || 0) + 1; // additive stacking
         activated = true;
         break;
       case 'LASER':
-        this.player.hasLaser = true;
-        this.player.hasDouble = false;
-        this.player.hasSpread = false; // mutually exclusive
+        this.player.laserLevel = (this.player.laserLevel || 0) + 1; // additive stacking
         activated = true;
         break;
       case 'OPTION':
@@ -491,8 +481,8 @@ class Game {
       }
 
       if (powerUp === 'SHIELD') {
-        // stronger shield on activation
-        this.player.shieldHp = Math.max(this.player.shieldHp, 5);
+        // add shield HP (additive)
+        this.player.shieldHp = Math.min((this.player.shieldHp || 0) + 3, 10);
       }
 
       this.powerUpIndex = -1; // reset selection
@@ -505,19 +495,19 @@ class Game {
       // Fake Capsule penalty: wipe powerups + trigger warning/damage
       audio.playSFX('player_death');
       this.player.speedLevel = 1;
-      this.player.hasMissile = false;
-      this.player.hasDouble = false;
-      this.player.hasSpread = false;
-      this.player.hasLaser = false;
+      this.player.missileLevel = 0;
+      this.player.doubleLevel = 0;
+      this.player.spreadLevel = 0;
+      this.player.laserLevel = 0;
       this.player.optionCount = 0;
       this.player.shieldHp = 0;
       this.player.attackSpeed = 1.0; // reset attack speed on fake
       this.powerUpIndex = -1;
       
-      this.spawnExplosion(this.player.x + this.player.w/2, this.player.y + this.player.h/2, '#ff0033');
+      this.spawnExplosion(this.player.x + this.player.w/2, this.player.y + this.player.h/2, '#00ccff');
       
       // Spawn floating visual warning text
-      this.spawnFloatingText("DESTRUCTIVE ERROR!", this.player.x, this.player.y - 20, '#ff0055');
+      this.spawnFloatingText("DESTRUCTIVE ERROR!", this.player.x, this.player.y - 20, '#00ccff');
     } else {
       audio.playSFX('powerup_pickup');
       this.powerUpIndex = (this.powerUpIndex + 1) % this.powerUpNames.length;
@@ -525,14 +515,12 @@ class Game {
       const sel = this.powerUpNames[this.powerUpIndex];
       this.spawnFloatingText(`選択: ${this.powerDisplayNames[sel] || sel}`, this.player.x + this.player.w/2, this.player.y - 14, '#ffffff');
 
-      // Apply attack speed +10% for any non-fake (blue) capsule pickup
+      // Apply attack speed multiplicatively for any non-fake (青)カプセル拾得
       const prev = this.player.attackSpeed || 1.0;
-      const next = Math.min(prev * 1.1, 2.0);
-      if (next > prev) {
-        this.player.attackSpeed = next;
-        this.spawnFloatingText('攻撃速度 +10%', this.player.x + this.player.w/2, this.player.y - 34, '#00ccff');
-        audio.playSFX('powerup_activate');
-      }
+      const next = prev * 1.1; // 10% multiplicative stacking
+      this.player.attackSpeed = next;
+      this.spawnFloatingText(`攻撃速度 x${next.toFixed(2)}`, this.player.x + this.player.w/2, this.player.y - 34, '#00ccff');
+      audio.playSFX('powerup_activate');
     }
     this.updateRank();
   }
@@ -545,10 +533,11 @@ class Game {
     rankScore += (this.player.speedLevel - 1) * 0.1;
     rankScore += this.player.optionCount * 0.15;
     rankScore += this.player.shieldHp * 0.1;
-    if (this.player.hasLaser) rankScore += 0.2;
-    if (this.player.hasDouble) rankScore += 0.15;
-    if (this.player.hasSpread) rankScore += 0.18;
-    if (this.player.hasMissile) rankScore += 0.1;
+    // Add rank contributions from additive power-up levels
+    rankScore += (this.player.laserLevel || 0) * 0.2;
+    rankScore += (this.player.doubleLevel || 0) * 0.15;
+    rankScore += (this.player.spreadLevel || 0) * 0.18;
+    rankScore += (this.player.missileLevel || 0) * 0.1;
     rankScore += (this.lives - 1) * 0.05;
     
     this.rank = Math.min(Math.max(rankScore, 0.0), 1.0);
@@ -599,7 +588,7 @@ class Game {
   // --- Spawning Logic ---
   spawnEnemy() {
     // Enemy spawning proportional to Rank difficulty adjustment
-    const spawnRate = isTestMode ? 0.05 : (0.015 + this.rank * 0.02);
+    const spawnRate = 0.015 + this.rank * 0.02;
     if (Math.random() < spawnRate && !this.boss) {
       // Pick random type
       const roll = Math.random();
@@ -718,7 +707,7 @@ class Game {
     }
   }
 
-  spawnExplosion(x, y, color = '#ff3300', isLarge = false) {
+  spawnExplosion(x, y, color = '#00ccff', isLarge = false) {
     const numParticles = isLarge ? 50 : 15;
     
     // 1. Shrapnel / Fire particles
@@ -745,7 +734,7 @@ class Game {
       y: y,
       radius: 5,
       maxRadius: isLarge ? 120 : 45,
-      color: color === '#33ccff' ? 'rgba(0, 243, 255, 0.4)' : 'rgba(255, 60, 0, 0.4)',
+      color: color === '#00ccff' ? 'rgba(0, 204, 255, 0.4)' : 'rgba(255, 60, 0, 0.4)',
       life: 25
     });
 
@@ -834,7 +823,7 @@ class Game {
     };
     
     // Play transition boss warning text
-    this.spawnFloatingText("警告！大規模な脅威を検出しました！", CANVAS_WIDTH / 2 - 200, CANVAS_HEIGHT / 2, '#ff0055');
+    this.spawnFloatingText("警告！大規模な脅威を検出しました！", CANVAS_WIDTH / 2 - 200, CANVAS_HEIGHT / 2, '#00ccff');
     audio.startBGM('boss');
   }
 
@@ -913,7 +902,7 @@ class Game {
     // 2. Weapon Systems Auto-firing
     this.fireTimer++;
     if (this.keys['Space'] || this.mouse.isDown) {
-      const baseCooldown = this.player.hasLaser ? 4 : 10;
+      const baseCooldown = (this.player.laserLevel && this.player.laserLevel > 0) ? 4 : 10;
       const cooldown = baseCooldown / (this.player.attackSpeed || 1.0);
       if (this.fireTimer >= cooldown) {
         this.fireWeapon();
@@ -931,86 +920,60 @@ class Game {
     // Dynamic Muzzle flash
     this.spawnMuzzleFlash(gunX, gunY);
     
-    if (this.player.hasLaser) {
-      // Clean laser line
-      audio.playSFX('laser');
-      this.lasers.push({
-        x: gunX,
-        y: gunY - 4,
-        w: CANVAS_WIDTH - gunX,
-        h: 12,
-        damage: 1.5,
-        life: 5
-      });
-      
-      // Options fire lasers too
-      this.fireOptionWeapons('laser');
-    } else {
-      audio.playSFX('shoot');
-      
-      // Main straight bullet
+    // Always fire base bullet
+    audio.playSFX('shoot');
+    this.bullets.push({
+      x: gunX,
+      y: gunY - 3,
+      w: 22,
+      h: 6,
+      velX: 18,
+      velY: 0,
+      isEnemy: false
+    });
+
+    // Double level: add additional diagonal bullets per level
+    const dLevel = this.player.doubleLevel || 0;
+    for (let d = 0; d < dLevel; d++) {
+      const spreadOffset = 4 + d * 3;
       this.bullets.push({
         x: gunX,
-        y: gunY - 3,
-        w: 22,
+        y: gunY - (5 + d * 2),
+        w: 20,
         h: 6,
-        velX: 18,
-        velY: 0,
+        velX: 16 - d * 1.0,
+        velY: - (8 + d * 2),
         isEnemy: false
       });
-      
-      // Double weapon secondary bullet (up-diagonal)
-      if (this.player.hasDouble) {
-        this.bullets.push({
-          x: gunX,
-          y: gunY - 5,
-          w: 20,
-          h: 6,
-          velX: 16,
-          velY: -8,
-          isEnemy: false
-        });
-      }
-      
-      // Spread weapon: 3-way directional shots
-      if (this.player.hasSpread) {
-        // Upper diagonal
-        this.bullets.push({
-          x: gunX,
-          y: gunY - 6,
-          w: 18,
-          h: 5,
-          velX: 15,
-          velY: -7,
-          isEnemy: false
-        });
-        // Lower diagonal
-        this.bullets.push({
-          x: gunX,
-          y: gunY + 6,
-          w: 18,
-          h: 5,
-          velX: 15,
-          velY: 7,
-          isEnemy: false
-        });
-      }
-      
+    }
+
+    // Spread level: create pairs of angled shots; each level increases spread count
+    const sLevel = this.player.spreadLevel || 0;
+    for (let s = 0; s < sLevel; s++) {
+      const vy = 6 + s * 2;
+      this.bullets.push({ x: gunX, y: gunY - (6 + s*2), w: 18, h:5, velX: 15 - s*0.5, velY: -vy, isEnemy:false });
+      this.bullets.push({ x: gunX, y: gunY + (6 + s*2), w: 18, h:5, velX: 15 - s*0.5, velY: vy, isEnemy:false });
+    }
+
+    // Laser level: if present, fire laser(s) in addition to bullets
+    const lLevel = this.player.laserLevel || 0;
+    if (lLevel > 0) {
+      audio.playSFX('laser');
+      // single laser with damage scaling by level
+      this.lasers.push({ x: gunX, y: gunY - 4, w: CANVAS_WIDTH - gunX, h: 12, damage: 1.0 + 0.6 * lLevel, life: 5 });
+      // Options also fire lasers
+      this.fireOptionWeapons('laser');
+    } else {
       this.fireOptionWeapons('bullet');
     }
-    
-    // Missile drop weapon (ground slider)
-    if (this.player.hasMissile && this.frameCount % 25 === 0) {
+
+    // Missile level: spawn missiles equal to level every interval
+    const mLevel = this.player.missileLevel || 0;
+    if (mLevel > 0 && this.frameCount % 25 === 0) {
       audio.playSFX('missile');
-      this.missiles.push({
-        x: this.player.x + this.player.w / 2,
-        y: this.player.y + this.player.h,
-        w: 18,
-        h: 10,
-        velX: 4,
-        velY: 5, // falls down
-        state: 'FALLING' // FALLING, SLIDING
-      });
+      for (let mi = 0; mi < mLevel; mi++) {
+        this.missiles.push({ x: this.player.x + this.player.w / 2 + mi*6, y: this.player.y + this.player.h, w:18, h:10, velX:4, velY:5, state:'FALLING' });
+      }
     }
   }
 
@@ -1028,35 +991,14 @@ class Game {
       this.spawnMuzzleFlash(optX + 15, optY);
       
       if (type === 'laser') {
-        this.lasers.push({
-          x: optX + 15,
-          y: optY - 3,
-          w: CANVAS_WIDTH - (optX + 15),
-          h: 8,
-          damage: 0.8,
-          life: 5
-        });
+        const lLevel = this.player.laserLevel || 0;
+        this.lasers.push({ x: optX + 15, y: optY - 3, w: CANVAS_WIDTH - (optX + 15), h: 8, damage: 0.6 * lLevel, life: 5 });
       } else {
-        this.bullets.push({
-          x: optX + 15,
-          y: optY - 3,
-          w: 18,
-          h: 6,
-          velX: 18,
-          velY: 0,
-          isEnemy: false
-        });
+        this.bullets.push({ x: optX + 15, y: optY - 3, w: 18, h: 6, velX: 18, velY: 0, isEnemy: false });
         
-        if (this.player.hasDouble) {
-          this.bullets.push({
-            x: optX + 15,
-            y: optY - 5,
-            w: 16,
-            h: 6,
-            velX: 16,
-            velY: -8,
-            isEnemy: false
-          });
+        const dLevel = this.player.doubleLevel || 0;
+        for (let d = 0; d < dLevel; d++) {
+          this.bullets.push({ x: optX + 15, y: optY - (5 + d*2), w: 16, h: 6, velX: 16 - d*1.0, velY: -(8 + d*2), isEnemy: false });
         }
       }
     }
@@ -1505,7 +1447,7 @@ class Game {
           this.spawnExplosion(b.x, b.y, '#ffcc00');
           
           if (g.hp <= 0) {
-            this.spawnExplosion(g.x + g.w/2, g.y + g.h/2, '#ff3300', true);
+            this.spawnExplosion(g.x + g.w/2, g.y + g.h/2, '#00ccff', true);
             this.gimmicks.splice(j, 1);
             this.score += 250;
           }
@@ -1581,7 +1523,7 @@ class Game {
               this.spawnExplosion(g.x + Math.random()*g.w, l.y + 6, '#ffffff');
             }
             if (g.hp <= 0) {
-              this.spawnExplosion(g.x + g.w/2, g.y + g.h/2, '#ff3300', true);
+              this.spawnExplosion(g.x + g.w/2, g.y + g.h/2, '#00ccff', true);
               this.gimmicks.splice(idx, 1);
               this.score += 250;
             }
@@ -1618,7 +1560,7 @@ class Game {
         if (this.rectIntersect(m, e)) {
           e.hp -= 3; // high impact damage
           this.missiles.splice(i, 1);
-          this.spawnExplosion(m.x, m.y, '#ff3300', true);
+          this.spawnExplosion(m.x, m.y, '#00ccff', true);
           
           if (e.hp <= 0) {
             this.enemyKilled(e);
@@ -1632,7 +1574,7 @@ class Game {
 
   enemyKilled(e) {
     audio.playSFX('kill');
-    this.spawnExplosion(e.x + e.w / 2, e.y + e.h / 2, e.type === 2 ? '#ffaa00' : '#ff3300', e.type === 2);
+    this.spawnExplosion(e.x + e.w / 2, e.y + e.h / 2, e.type === 2 ? '#ffaa00' : '#00ccff', e.type === 2);
     
     // Add Score
     this.score += e.type === 2 ? 500 : 100;
@@ -1653,7 +1595,7 @@ class Game {
 
   bossKilled(b) {
     b.state = 'DYING';
-    b.introTimer = isTestMode ? 30 : 180; // 0.5s in testMode, 3s normally
+    b.introTimer = 180; // intro timer (frames)
     audio.playSFX('boss_death');
     this.spawnExplosion(b.x + b.w / 2, b.y + b.h / 2, '#ffcc00', true);
     this.score += 5000;
@@ -1751,8 +1693,8 @@ class Game {
           
           // Flash colors
           const pulse = Math.floor(this.frameCount / 8) % 2 === 0;
-          this.ctx.fillStyle = pulse ? 'rgba(255, 0, 85, 0.9)' : 'rgba(255, 255, 255, 0.9)';
-          this.ctx.strokeStyle = pulse ? '#ff0055' : '#ffffff';
+          this.ctx.fillStyle = pulse ? 'rgba(0, 204, 255, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+          this.ctx.strokeStyle = pulse ? '#00ccff' : '#ffffff';
           this.ctx.lineWidth = 2;
           
           // Outer panel box
@@ -1762,7 +1704,7 @@ class Game {
           
           // Warning Icon
           this.ctx.font = '900 20px Orbitron';
-          this.ctx.fillStyle = '#ff0055';
+          this.ctx.fillStyle = '#00ccff';
           this.ctx.textAlign = 'center';
           this.ctx.fillText('⚠️ 致命的ビーコン警報 ⚠️', CANVAS_WIDTH / 2, 104);
           
@@ -1779,21 +1721,6 @@ class Game {
           this.ctx.fillText(alertText, CANVAS_WIDTH / 2, 126);
           
           // Draw indicator arrow pointing down to relative hazard coordinate
-          if (record.y) {
-            this.ctx.strokeStyle = 'rgba(255,0,85,0.7)';
-            this.ctx.beginPath();
-            this.ctx.setLineDash([5, 5]);
-            this.ctx.moveTo(relativeX, 0);
-            this.ctx.lineTo(relativeX, CANVAS_HEIGHT);
-            this.ctx.stroke();
-            this.ctx.setLineDash([]);
-            
-            // Floating mini-HUD marker
-            this.ctx.fillStyle = '#ff0055';
-            this.ctx.beginPath();
-            this.ctx.arc(relativeX, record.y, 8, 0, Math.PI*2);
-            this.ctx.fill();
-          }
           
           this.ctx.restore();
         }
@@ -1884,7 +1811,7 @@ class Game {
       
       // Core pod
       this.ctx.fillStyle = '#ffffff';
-      this.ctx.strokeStyle = '#ff3300';
+      this.ctx.strokeStyle = '#00ccff';
       this.ctx.lineWidth = 2;
       this.ctx.beginPath();
       this.ctx.arc(optX, optY, 6, 0, Math.PI*2);
@@ -1923,12 +1850,12 @@ class Game {
     this.enemyBullets.forEach(eb => {
       const redGrad = this.ctx.createRadialGradient(eb.x + eb.w/2, eb.y + eb.h/2, 1, eb.x + eb.w/2, eb.y + eb.h/2, eb.w/2);
       redGrad.addColorStop(0, '#ffffff');
-      redGrad.addColorStop(0.3, '#ff0055');
-      redGrad.addColorStop(1, 'rgba(255, 0, 85, 0)');
+      redGrad.addColorStop(0.3, '#00ccff');
+      redGrad.addColorStop(1, 'rgba(0, 204, 255, 0)');
       
       this.ctx.fillStyle = redGrad;
       this.ctx.shadowBlur = 8;
-      this.ctx.shadowColor = '#ff0055';
+      this.ctx.shadowColor = '#00ccff';
       
       this.ctx.beginPath();
       this.ctx.arc(eb.x + eb.w/2, eb.y + eb.h/2, eb.w/2, 0, Math.PI*2);
@@ -1944,7 +1871,7 @@ class Game {
       this.ctx.save();
       // Draw missile shape
       this.ctx.fillStyle = '#ffffff';
-      this.ctx.strokeStyle = '#ff3300';
+      this.ctx.strokeStyle = '#00ccff';
       this.ctx.lineWidth = 1;
       this.ctx.beginPath();
       this.ctx.roundRect(m.x, m.y, m.w, m.h, 2);
@@ -2028,7 +1955,7 @@ class Game {
         
         bCtx.drawImage(assets.images.bossShip, 0, 0, b.w, b.h);
         bCtx.globalCompositeOperation = 'source-in';
-        bCtx.fillStyle = b.hitFlash % 2 === 0 ? '#ffffff' : '#ff3333';
+        bCtx.fillStyle = b.hitFlash % 2 === 0 ? '#ffffff' : '#00ccff';
         bCtx.fillRect(0, 0, b.w, b.h);
         
         this.ctx.drawImage(buffer, b.x, b.y);
@@ -2046,8 +1973,8 @@ class Game {
     
     if (b.stage === 1) {
       coreGlow.addColorStop(0, '#ffffff');
-      coreGlow.addColorStop(0.3, '#ff0033');
-      coreGlow.addColorStop(1, 'rgba(255, 0, 50, 0)');
+      coreGlow.addColorStop(0.3, '#00ccff');
+      coreGlow.addColorStop(1, 'rgba(0, 204, 255, 0)');
     } else if (b.stage === 2) {
       coreGlow.addColorStop(0, '#ffffff');
       coreGlow.addColorStop(0.3, '#ccff00');
@@ -2222,13 +2149,13 @@ class Game {
       this.ctx.fillText(`BOSS`, CANVAS_WIDTH / 2, 20);
       
       // Outer slot
-      this.ctx.fillStyle = 'rgba(255, 0, 85, 0.2)';
+      this.ctx.fillStyle = 'rgba(0, 204, 255, 0.2)';
       this.ctx.fillRect(barX, 26, barW, 12);
-      this.ctx.strokeStyle = '#ff0055';
+      this.ctx.strokeStyle = '#00ccff';
       this.ctx.strokeRect(barX, 26, barW, 12);
       
       // Inside fill
-      this.ctx.fillStyle = '#ff0055';
+      this.ctx.fillStyle = '#00ccff';
       const currentFill = Math.max(0, barW * (b.hp / b.maxHp));
       this.ctx.fillRect(barX, 26, currentFill, 12);
     } else {
@@ -2255,11 +2182,19 @@ class Game {
     this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
     this.ctx.fillRect(rankX, 19, rankW, 12);
     
-    // color shifts to red as rank grows
+    // color shifts to hue (green->red) as rank grows
     const rColor = `hsl(${120 - this.rank * 120}, 100%, 50%)`;
     this.ctx.fillStyle = rColor;
     this.ctx.fillRect(rankX, 19, rankW * this.rank, 12);
-    
+
+    // Attack speed numeric display (multiplicative stack visible)
+    if (this.player) {
+    const atk = (this.player.attackSpeed || 1.0).toFixed(2);
+    this.ctx.textAlign = 'right';
+    this.ctx.fillStyle = '#00ccff';
+    this.ctx.fillText(`攻撃速度: x${atk}`, CANVAS_WIDTH - 260, 30);
+    }
+
     this.ctx.restore();
 
     // 2. Gradius Style Power Up selection grid (Canvas Bottom)
@@ -2319,18 +2254,14 @@ class Game {
 
   // --- Helper utility ---
   loop() {
-    // If in testMode, fast forward logic updates to complete testing quickly under throttled environments
-    const logicUpdates = isTestMode ? 5 : 1;
+    // 通常のフレーム更新（テスト用高速化は削除）
+    const logicUpdates = 1;
     for (let i = 0; i < logicUpdates; i++) {
       this.update();
     }
     this.draw();
     // Use requestAnimationFrame for smooth play, setTimeout for headless test reliability
-    if (isTestMode) {
-      setTimeout(() => this.loop(), 1000 / 60);
-    } else {
-      requestAnimationFrame(() => this.loop());
-    }
+    requestAnimationFrame(() => this.loop());
   }
 }
 

@@ -1,0 +1,307 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap');
+
+:root {
+  --neon-blue: #00f3ff;
+  --neon-pink: #00ccff;
+  --neon-green: #39ff14;
+  --neon-purple: #b026ff;
+  --bg-dark: #070714;
+  --bg-panel: rgba(13, 13, 29, 0.75);
+  --border-neon: 1px solid var(--neon-blue);
+  --font-title: 'Orbitron', sans-serif;
+  --font-main: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  color: #ffffff;
+  font-family: var(--font-main);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Background animated stars */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #0f0c24 0%, var(--bg-dark) 100%);
+  z-index: -2;
+}
+
+#app-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  max-width: 1200px;
+  max-height: 675px; /* 16:9 Aspect Ratio */
+  aspect-ratio: 16 / 9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-radius: 8px;
+  background: #000;
+}
+
+/* Canvas styling */
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Overlay Menus (Start, Game Over, Pause) */
+.menu-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(5, 5, 15, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  transition: opacity 0.4s ease, visibility 0.4s;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Title Glitch Styling */
+.title-container {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.main-title {
+  font-family: var(--font-title);
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.8), 0 0 20px rgba(0, 243, 255, 0.4);
+  animation: glow 3s infinite alternate;
+}
+
+.subtitle {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--neon-pink);
+  margin-top: 0.5rem;
+  text-shadow: 0 0 8px rgba(0, 204, 255, 0.6);
+}
+
+/* Premium Buttons */
+.btn-cyber {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: transparent;
+  border: 1px solid var(--neon-blue);
+  padding: 0.8rem 2.5rem;
+  margin: 0.8rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.btn-cyber::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.25), transparent);
+  transition: all 0.5s ease;
+}
+
+.btn-cyber:hover::before {
+  left: 100%;
+}
+
+.btn-cyber:hover {
+  background: rgba(0, 243, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.2);
+  border-color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.btn-cyber:active {
+  transform: translateY(1px);
+}
+
+/* Instructions Panel */
+.instructions {
+  background: var(--bg-panel);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  padding: 1.2rem 2rem;
+  border-radius: 6px;
+  max-width: 500px;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.instructions h3 {
+  font-family: var(--font-title);
+  color: var(--neon-blue);
+  margin-bottom: 0.6rem;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+.instructions ul {
+  list-style: none;
+}
+
+.instructions li {
+  margin-bottom: 0.4rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.instructions li span.key {
+  color: var(--neon-green);
+  font-family: monospace;
+  font-weight: bold;
+}
+
+/* Mobile Virtual Controls Overlay */
+#virtual-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none; /* Let events pass to canvas for dragging, unless clicking buttons */
+  display: none; /* Shown dynamically on touch devices */
+}
+
+#virtual-joystick-area {
+  position: absolute;
+  bottom: 5%;
+  left: 5%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(0, 243, 255, 0.05);
+  border: 2px dashed rgba(0, 243, 255, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#virtual-joystick-stick {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--neon-blue) 0%, #0055aa 100%);
+  box-shadow: 0 0 15px var(--neon-blue);
+  transition: transform 0.05s ease;
+}
+
+.touch-btn-container {
+  position: absolute;
+  bottom: 8%;
+  right: 5%;
+  display: flex;
+  gap: 1.5rem;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--neon-pink);
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#btn-fire {
+  background: radial-gradient(circle, var(--neon-pink) 0%, #aa0033 100%);
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+}
+
+#btn-power {
+  background: radial-gradient(circle, var(--neon-green) 0%, #116600 100%);
+  border-color: var(--neon-green);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+}
+
+.touch-btn:active {
+  transform: scale(0.9);
+}
+
+/* Animations */
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.6), 0 0 20px rgba(0, 243, 255, 0.3);
+  }
+  to {
+    text-shadow: 0 0 15px rgba(0, 243, 255, 0.9), 0 0 30px rgba(0, 243, 255, 0.6), 0 0 40px var(--neon-blue);
+  }
+}
+
+/* Responsive adjustment for desktop constraints */
+@media (max-width: 1200px) or (max-height: 675px) {
+  #app-container {
+    width: 100vw;
+    height: 56.25vw; /* maintain 16:9 aspect */
+    max-height: 100vh;
+    max-width: 177.78vh;
+  }
+}
