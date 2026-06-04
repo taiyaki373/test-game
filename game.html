@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Aegis Vanguard: Chronicles of the Ion Void</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Game Drawing Area -->
+    <canvas id="game-canvas" width="1280" height="720"></canvas>
+
+    <!-- Virtual Controls for Mobile Devices -->
+    <div id="virtual-controls">
+      <div id="virtual-joystick-area">
+        <div id="virtual-joystick-stick"></div>
+      </div>
+      <div class="touch-btn-container">
+        <div id="btn-power" class="touch-btn">POWER</div>
+        <div id="btn-fire" class="touch-btn">FIRE</div>
+      </div>
+    </div>
+
+    <!-- Title / Main Menu Screen -->
+    <div id="title-screen" class="menu-overlay active">
+      <div class="title-container">
+        <h1 class="main-title">Aegis Vanguard</h1>
+        <div class="subtitle">Chronicles of the Ion Void</div>
+      </div>
+      <button id="btn-start" class="btn-cyber">MISSION START</button>
+      
+      <div class="instructions">
+        <h3>CONTROLS</h3>
+        <ul>
+          <li><span>Move Up/Down/Left/Right:</span> <span class="key">W/A/S/D or Arrow Keys</span></li>
+          <li><span>Fire Main Cannon:</span> <span class="key">Spacebar (Hold to auto-fire)</span></li>
+          <li><span>Select Power-Up:</span> <span class="key">Shift or Enter or Z</span></li>
+          <li><span>Mouse Play:</span> <span class="key">Move pointer (Autofire on click)</span></li>
+          <li><span>Mobile/Tablet:</span> <span class="key">Left screen drag & Right buttons</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-screen" class="menu-overlay">
+      <div class="title-container">
+        <h2 class="main-title" style="color: var(--neon-pink); text-shadow: 0 0 15px var(--neon-pink);">MISSION FAILED</h2>
+        <div class="subtitle">Annihilated in the Ion Void</div>
+      </div>
+      <div id="gameover-stats" style="margin-bottom: 1.5rem; font-size: 1.1rem; text-align: center; color: rgba(255,255,255,0.85);">
+        <!-- Stats injected here -->
+      </div>
+      <button id="btn-retry" class="btn-cyber" style="border-color: var(--neon-pink);">REDEPLOY (CONTINUE)</button>
+    </div>
+
+    <!-- Mission Accomplished (Game Clear) Screen -->
+    <div id="clear-screen" class="menu-overlay">
+      <div class="title-container">
+        <h2 class="main-title" style="color: var(--neon-green); text-shadow: 0 0 15px var(--neon-green);">MISSION ACCOMPLISHED</h2>
+        <div class="subtitle">Legends of the Aegis Vanguard</div>
+      </div>
+      <div id="clear-stats" style="margin-bottom: 2rem; font-size: 1.2rem; text-align: center; color: rgba(255, 255, 255, 0.9);">
+        <!-- Stats injected here -->
+      </div>
+      <button id="btn-restart" class="btn-cyber" style="border-color: var(--neon-green);">RETURN TO TITLE</button>
+    </div>
+
+    <!-- Stage Intro Overlay -->
+    <div id="stage-intro" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 4; opacity: 0; transition: opacity 0.5s ease;">
+      <h2 id="stage-title-text" style="font-family: var(--font-title); font-size: 3rem; text-transform: uppercase; color: #fff; text-shadow: 0 0 20px var(--neon-blue); letter-spacing: 5px;">STAGE 1</h2>
+      <div id="stage-sub-text" style="font-family: var(--font-title); font-size: 1.2rem; text-transform: uppercase; color: var(--neon-green); letter-spacing: 8px; margin-top: 0.5rem;">THE VOID FRONTIER</div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/game.js"></script>
+</body>
+</html>

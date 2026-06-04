@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aegis Vanguard Launcher</title>
+  <style>
+    body{background:#020417;color:#e8fbff;font-family:system-ui,Segoe UI,Roboto,Arial;padding:48px}
+    .card{max-width:720px;margin:40px auto;padding:24px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));box-shadow:0 6px 30px rgba(0,0,0,0.6);border:1px solid rgba(0,255,200,0.06)}
+    h1{color:#9ff}
+    .btn{display:inline-block;padding:14px 22px;margin:12px;border-radius:10px;background:#00c8ff;color:#012;border:none;text-decoration:none;font-weight:700}
+    .btn.secondary{background:#3a3d4b;color:#eaf}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    p.small{color:#aee;opacity:0.9}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Aegis Vanguard</h1>
+    <p class="small">Choose an action to continue.</p>
+    <div class="row">
+      <a class="btn" href="/game.html">Play Game</a>
+      <a class="btn secondary" href="/docs/overview.html">Architecture & Docs</a>
+      <a class="btn secondary" href="/index.html?testMode=true">Quick Test Mode</a>
+    </div>
+    <hr style="margin:18px 0;border-color:rgba(255,255,255,0.04)"/>
+    <p style="font-size:14px;color:#bff;">Tip: If game doesn't start, open the game directly: <code>/game.html</code>. For mobile, use start.command to show local IP/QR.</p>
+  </div>
+</body>
+</html>
