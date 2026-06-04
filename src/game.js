@@ -393,7 +393,8 @@ class Game {
       optionTrail: [], // delayed coords for option alignment
       bank: 0,
       idleHover: 0, // Micro-hover oscillation counter
-      deathTimer: 0
+      deathTimer: 0,
+      attackSpeed: 1.0 // multiplicative attack speed (1.0 = normal)
     };
     this.powerUpIndex = -1;
   }
@@ -499,6 +500,7 @@ class Game {
       this.player.hasLaser = false;
       this.player.optionCount = 0;
       this.player.shieldHp = 0;
+      this.player.attackSpeed = 1.0; // reset attack speed on fake
       this.powerUpIndex = -1;
       
       this.spawnExplosion(this.player.x + this.player.w/2, this.player.y + this.player.h/2, '#ff0033');
@@ -511,6 +513,16 @@ class Game {
       // Immediate feedback of which power-up is selected
       const sel = this.powerUpNames[this.powerUpIndex];
       this.spawnFloatingText(`SELECTED: ${sel}`, this.player.x + this.player.w/2, this.player.y - 14, '#ffffff');
+
+      // Special: If the selected capsule is MISSILE (blue), apply immediate attack speed +10%
+      if (sel === 'MISSILE') {
+        // Apply multiplicative bonus, clamp to 2.0 max
+        const prev = this.player.attackSpeed || 1.0;
+        const next = Math.min(prev * 1.1, 2.0);
+        this.player.attackSpeed = next;
+        this.spawnFloatingText('FIRE RATE +10%', this.player.x + this.player.w/2, this.player.y - 34, '#00ccff');
+        audio.playSFX('powerup_activate');
+      }
     }
     this.updateRank();
   }
@@ -891,7 +903,8 @@ class Game {
     // 2. Weapon Systems Auto-firing
     this.fireTimer++;
     if (this.keys['Space'] || this.mouse.isDown) {
-      const cooldown = this.player.hasLaser ? 4 : 10;
+      const baseCooldown = this.player.hasLaser ? 4 : 10;
+      const cooldown = baseCooldown / (this.player.attackSpeed || 1.0);
       if (this.fireTimer >= cooldown) {
         this.fireWeapon();
         this.fireTimer = 0;
